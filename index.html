@@ -84,6 +84,11 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 .gb .pp-foot{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-top:var(--cds-gap-sm)}
 @media (max-width:600px){.gb .pp-row{grid-template-columns:1.4rem minmax(0,1fr) 4rem 2.4rem}.gb .pp-note{grid-column:2 / -1;margin-top:-.2rem}}
 .gb tr.wc-hold td{font-weight:var(--cds-font-weight-medium)} .gb .wc-tag{display:inline-block;font-size:.72em;font-weight:var(--cds-font-weight-medium);color:#fff;border-radius:4px;padding:.05em .4em;margin-right:.45em;vertical-align:1px}
+.gb .glance{padding:var(--cds-pad-md) var(--cds-pad-lg)}
+.gb .glance .kpis{gap:0}
+.gb .glance .kpi{background:none;border:0;border-radius:0;padding:var(--cds-pad-sm) var(--cds-pad-lg);border-left:1px solid var(--color-border-line);box-shadow:none}
+.gb .glance .kpi:first-child{border-left:0;padding-left:0}
+@media (max-width:700px){.gb .glance .kpi{border-left:0;padding:var(--cds-pad-sm) 0;border-top:1px solid var(--color-border-line)}.gb .glance .kpi:nth-child(-n+2){border-top:0}.gb .glance .kpi:nth-child(even){padding-left:var(--cds-pad-md);border-left:1px solid var(--color-border-line)}}
 .gb .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
 .gb .card h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
 .gb .card .note{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:var(--cds-gap-xs) 0 var(--cds-gap-md)}
@@ -135,11 +140,13 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
  </nav>
 
  <section class="pane on" id="now">
+  <div class="card glance">
   <div class="kpis">
    <div class="kpi"><div class="lab" id="kpi-hs-lab" data-source="top_weekly">Last week's high score</div><div class="big dash-skeleton" id="kpi-hs" data-source="top_weekly">—</div><div class="sub" id="kpi-hs-sub" data-source="top_weekly">—</div></div>
    <div class="kpi"><div class="lab">Best record</div><div class="big dash-skeleton" id="kpi-rec" data-source="standings_2026">—</div><div class="sub" id="kpi-rec-sub" data-source="standings_2026">—</div></div>
    <div class="kpi"><div class="lab">#1 in power rankings</div><div class="big dash-skeleton" id="kpi-pw" data-source="power_2026">—</div><div class="sub" id="kpi-pw-sub" data-source="power_2026">—</div></div>
    <div class="kpi"><div class="lab">Survivor pool</div><div class="big dash-skeleton" id="kpi-surv" data-source="survivor">—</div><div class="sub" id="kpi-surv-sub" data-source="survivor">—</div></div>
+  </div>
   </div>
   <div class="card" id="matchups-card">
    <h2 id="mu-title">This week's matchups</h2>
