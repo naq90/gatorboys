@@ -136,10 +136,10 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 
  <section class="pane on" id="now">
   <div class="kpis">
-   <div class="kpi"><div class="lab">2026 leader · thru week 9</div><div class="big dash-skeleton" data-source="headline" data-field="leader" data-row="0">—</div><div class="sub"><span data-source="headline" data-field="leader_record" data-row="0">—</span></div></div>
-   <div class="kpi"><div class="lab">Most points 2026</div><div class="big dash-skeleton" data-source="headline" data-field="pf_leader" data-row="0">—</div><div class="sub"><span data-source="headline" data-field="pf_leader_pts" data-row="0">—</span> pts</div></div>
-   <div class="kpi"><div class="lab">Top week 2026</div><div class="big dash-skeleton" data-source="headline" data-field="top_week_pts" data-row="0">—</div><div class="sub"><span data-source="headline" data-field="top_week_owner" data-row="0">—</span></div></div>
-   <div class="kpi"><div class="lab">Survivor pool</div><div class="big" id="kpi-surv" data-source="survivor">—</div><div class="sub" id="kpi-surv-sub" data-source="survivor">—</div></div>
+   <div class="kpi"><div class="lab" id="kpi-hs-lab" data-source="top_weekly">Last week's high score</div><div class="big dash-skeleton" id="kpi-hs" data-source="top_weekly">—</div><div class="sub" id="kpi-hs-sub" data-source="top_weekly">—</div></div>
+   <div class="kpi"><div class="lab">Best record</div><div class="big dash-skeleton" id="kpi-rec" data-source="standings_2026">—</div><div class="sub" id="kpi-rec-sub" data-source="standings_2026">—</div></div>
+   <div class="kpi"><div class="lab">#1 in power rankings</div><div class="big dash-skeleton" id="kpi-pw" data-source="power_2026">—</div><div class="sub" id="kpi-pw-sub" data-source="power_2026">—</div></div>
+   <div class="kpi"><div class="lab">Survivor pool</div><div class="big dash-skeleton" id="kpi-surv" data-source="survivor">—</div><div class="sub" id="kpi-surv-sub" data-source="survivor">—</div></div>
   </div>
   <div class="card" id="matchups-card">
    <h2 id="mu-title">This week's matchups</h2>
@@ -720,7 +720,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       sA.innerHTML = alive.map(r => `<span class="pill ok" data-row-key="${GB.esc(r.owner)}">${alive.length === 1 ? '🏆 ' : ''}<b>${GB.esc(r.owner)}</b></span>`).join('');
       sO.innerHTML = out.map(r => `<div class="rw out" data-row-key="${GB.esc(r.owner)}"><span class="wk">Wk ${r.week_out}</span><span class="nm">${GB.esc(r.owner)}</span><span class="sc">${f2(r.score_out)}</span></div>`).join('');
       const kb = document.getElementById('kpi-surv'), ks = document.getElementById('kpi-surv-sub');
-      kb.textContent = alive.length === 1 ? alive[0].owner : `${alive.length} left`;
+      kb.classList.remove('dash-skeleton'); kb.textContent = alive.length === 1 ? alive[0].owner : `${alive.length} left`;
       ks.textContent = alive.length === 1 ? 'Survivor champion' : alive.map(r => r.owner.split(' ')[0]).join(', ');
     } else { sA.innerHTML = ''; sO.innerHTML = ''; sL.textContent = ''; }
     // standings + power + odds
@@ -750,6 +750,13 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
         {key: 'per_week', label: 'Needs / wk', num: true, fmt: (v, r) => r.holder ? '—' : '+' + f1(v)}], ['owner']);
       twc.querySelectorAll('tbody tr').forEach((tr, i) => { if (wcd.data[i].holder) tr.classList.add('wc-hold'); });
     } else { twc.innerHTML = ''; wcs.textContent = ''; }
+    // headline tiles
+    const setK = (id, big, sub) => { const b = document.getElementById(id), sb = document.getElementById(id + '-sub'); if (b) { b.textContent = big; b.classList.remove('dash-skeleton'); } if (sb) sb.textContent = sub; };
+    const kTw = dash.data('top_weekly'), kSt = dash.data('standings_2026'), kPw = dash.data('power_2026');
+    if (kTw.status === 'ok' && kTw.data.length) { const t = kTw.data[0]; document.getElementById('kpi-hs-lab').textContent = `High score · week ${t.week}`; setK('kpi-hs', t.owner, `${f2(t.points)} pts · beat ${t.runner_up.split(' ')[0]} by ${f2(t.margin)}`); }
+    if (kSt.status === 'ok' && kSt.data.length) { const r = kSt.data.slice().sort((a, b) => a.seed - b.seed); const lead = r[0], next = r[1], wl = x => x.record.split('-').map(Number); const [lw, ll] = wl(lead), [nw, nl] = wl(next); const gb = (lw - nw + nl - ll) / 2;
+      setK('kpi-rec', lead.owner, `${lead.record}${gb > 0 ? ` · ${gb} game${gb === 1 ? '' : 's'} ahead` : ' · tied atop'}`); }
+    if (kPw.status === 'ok' && kPw.data.length) { const p = kPw.data.slice().sort((a, b) => a.power_rank - b.power_rank); setK('kpi-pw', p[0].owner, `Then ${p[1].owner.split(' ')[0]}, ${p[2].owner.split(' ')[0]}`); }
     // clinch scenarios
     const cs = dash.data('clinch_scenarios'), cl = document.getElementById('clinch-list');
     if (cs.status === 'ok') {
