@@ -151,7 +151,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
    <div class="kpi"><div class="lab">Best record</div><div class="big dash-skeleton" id="kpi-rec" data-source="standings_2026">—</div><div class="sub" id="kpi-rec-sub" data-source="standings_2026">—</div></div>
    <div class="kpi"><div class="lab">#1 in power rankings</div><div class="big dash-skeleton" id="kpi-pw" data-source="power_2026">—</div><div class="sub" id="kpi-pw-sub" data-source="power_movers">—</div></div>
    <div class="kpi"><div class="lab">Survivor pool</div><div class="big dash-skeleton" id="kpi-surv" data-source="survivor">—</div><div class="sub" id="kpi-surv-sub" data-source="survivor">—</div></div>
-   <div class="kpi"><div class="lab">Prize money · $25 a week</div><div class="big dash-skeleton" id="kpi-pm" data-source="top_weekly">—</div><div class="sub" id="kpi-pm-sub" data-source="top_weekly">—</div></div>
+   <div class="kpi"><div class="lab">Prize money leader · $25 a week</div><div class="big dash-skeleton" id="kpi-pm" data-source="top_weekly">—</div><div class="sub" id="kpi-pm-sub" data-source="top_weekly">—</div></div>
   </div>
   </div>
   <div class="card" id="matchups-card">
@@ -787,9 +787,9 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     // headline tiles
     const setK = (id, big, sub) => { const b = document.getElementById(id), sb = document.getElementById(id + '-sub'); if (b) { b.textContent = big; b.classList.remove('dash-skeleton'); } if (sb) sb.textContent = sub; };
     const kTw = dash.data('top_weekly'), kSt = dash.data('standings_2026'), kPw = dash.data('power_2026');
-    if (kTw.status === 'ok' && kTw.data.length) { const t = kTw.data[0]; document.getElementById('kpi-hs-lab').textContent = `High score · week ${t.week}`; setK('kpi-hs', t.owner, `${f2(t.points)} pts · beat ${t.runner_up.split(' ')[0]} by ${f2(t.margin)}`); }
+    if (kTw.status === 'ok' && kTw.data.length) { const t = kTw.data[0]; document.getElementById('kpi-hs-lab').textContent = `High score · week ${t.week}`; setK('kpi-hs', f2(t.points), `${t.owner} · beat ${t.runner_up.split(' ')[0]} by ${f2(t.margin)}`); }
     if (kSt.status === 'ok' && kSt.data.length) { const r = kSt.data.slice().sort((a, b) => a.seed - b.seed); const lead = r[0], next = r[1], wl = x => x.record.split('-').map(Number); const [lw, ll] = wl(lead), [nw, nl] = wl(next); const gb = (lw - nw + nl - ll) / 2;
-      setK('kpi-rec', lead.owner, `${lead.record}${gb > 0 ? ` · ${gb} game${gb === 1 ? '' : 's'} ahead` : ' · tied atop'}`); }
+      setK('kpi-rec', lead.record, `${lead.owner}${gb > 0 ? ` · ${gb} game${gb === 1 ? '' : 's'} ahead` : ' · tied atop'}`); }
     const kMv = dash.data('power_movers');
     if (kPw.status === 'ok' && kPw.data.length) { const p = kPw.data.slice().sort((a, b) => a.power_rank - b.power_rank); setK('kpi-pw', p[0].owner, '');
       const sb = document.getElementById('kpi-pw-sub');
@@ -798,10 +798,10 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       else sb.textContent = `Then ${p[1].owner.split(' ')[0]}, ${p[2].owner.split(' ')[0]}`; }
     const kWk = dash.data('weekly');
     if (kWk.status === 'ok') { const w = kWk.data.filter(r => +r.season === 2026); const mw = d3.max(w, r => +r.week); const lo = d3.least(w.filter(r => +r.week === mw), r => +r.points);
-      if (lo) { document.getElementById('kpi-lo-lab').textContent = `Low score · week ${mw} 💩`; setK('kpi-lo', lo.owner, `${f2(+lo.points)} pts`); } }
+      if (lo) { document.getElementById('kpi-lo-lab').textContent = `Low score · week ${mw} 💩`; setK('kpi-lo', f2(+lo.points), lo.owner); } }
     if (kTw.status === 'ok' && kTw.data.length) { const c = d3.rollups(kTw.data, v => v.length, r => r.owner).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
       const top = c.filter(x => x[1] === c[0][1]);
-      setK('kpi-pm', top.map(x => x[0]).join(' & '), `$${c[0][1] * 25} leads · $${kTw.data.length * 25} paid out so far`); }
+      setK('kpi-pm', `$${c[0][1] * 25}`, `${top.map(x => x[0]).join(' & ')} · $${kTw.data.length * 25} paid out so far`); }
     // clinch scenarios
     const cs = dash.data('clinch_scenarios'), cl = document.getElementById('clinch-list');
     if (cs.status === 'ok') {
