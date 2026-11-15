@@ -98,8 +98,10 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 .gb td.tier1{--tc:#2bb673} .gb td.tier2{--tc:#9bd35a} .gb td.tier3{--tc:#f2d24b} .gb td.tier4{--tc:#f0954a} .gb td.tier5{--tc:#e5534b}
 .gb .tiers{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-bottom:var(--cds-gap-sm)}
 .gb .tiers span{display:inline-flex;align-items:center;gap:.35em} .gb .tiers i{width:10px;height:10px;border-radius:3px;background:color-mix(in srgb,var(--tc) 55%,transparent)}
+.gb .card > .hd{margin-bottom:var(--cds-gap-md)}
 .gb .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
-.gb .card h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.gb .card h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0 0 var(--cds-gap-md)}
+.gb .card .hd h2{margin:0}
 .gb .card .note{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:var(--cds-gap-xs) 0 var(--cds-gap-md)}
 .gb .chart{position:relative;min-height:280px}
 .gb .chart.tall{min-height:420px}
@@ -161,23 +163,19 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
   </div>
   <div class="card" id="matchups-card">
    <h2 id="mu-title">This week's matchups</h2>
-   <p class="note">2026 records and each rivalry's all-time series.</p>
    <div class="mu-grid" id="mu-grid" data-source="matchups_next"></div>
   </div>
   <div class="grid-race">
   <div class="card" id="standings-card">
-   <h2>2026 standings</h2>
-   <p class="note">Sorted by power ranking. Teams with close power scores share a tier color; a big gap starts a new tier. Seeds 1–5 go by record and the wildcard (6th seed) to the most points among everyone else. All-play is your record if you played every team every week; expected wins is how many games that all-play rate works out to, and luck is actual wins minus expected wins.</p>
+   <h2>Power Rankings</h2>
    <div class="tiers"><span><i style="--tc:#2bb673"></i>Tier 1</span><span><i style="--tc:#9bd35a"></i>Tier 2</span><span><i style="--tc:#f2d24b"></i>Tier 3</span><span><i style="--tc:#f0954a"></i>Tier 4</span><span><i style="--tc:#e5534b"></i>Tier 5</span></div>
    <div class="hscroll"><table id="t-stand" data-source="standings_2026" data-row-key="owner"></table></div>
   </div>
   <div class="card" id="odds-card">
    <h2>Playoff odds</h2>
-   <p class="note">Share of 10,000 simulated seasons that end with a playoff spot.</p>
    <div class="legend-inline"><span><i id="lg-in"></i>Top-5 seed today</span><span><i style="background:var(--cds-chart-muted)"></i>Outside the top 5</span></div>
    <div class="chart" id="c-odds" data-source="playoff_odds"></div>
    <div class="sub-h">Wildcard race</div>
-   <p class="note" style="margin-top:0">Most points among everyone outside the top 5 gets the 6th seed. <span id="wc-sum" data-source="wildcard_spot"></span></p>
    <div class="hscroll"><table id="t-wc" data-source="wildcard_spot" data-row-key="owner"></table></div>
    <div class="sub-h" id="clinch-title">Clinch scenarios</div>
    <div class="cl-list" id="clinch-list" data-source="clinch_scenarios"></div>
@@ -186,7 +184,6 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
   <div class="grid">
    <div class="card" id="survivor-card">
     <div class="hd"><h2>Survivor pool</h2><span class="pill" id="surv-left" data-source="survivor"></span></div>
-    <p class="note">Lowest score among those still standing is crossed off each week.</p>
     <div class="lab2">Still standing</div>
     <div class="chips" id="surv-alive" data-source="survivor"></div>
     <div class="lab2">Crossed off</div>
@@ -194,7 +191,6 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
    </div>
    <div class="card" id="topweek-card">
     <div class="hd"><h2>Top score each week</h2><span class="pill" id="tw-high" data-source="top_weekly"></span></div>
-    <p class="note">The week's highest scorer takes the $25 weekly prize.</p>
     <div class="lab2">Prize money</div>
     <div class="chips" id="tw-tally" data-source="top_weekly"></div>
     <div class="lab2">By week</div>
@@ -209,7 +205,6 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
    </div>
    <div class="card" id="luck-card">
     <h2>Luck, 2026</h2>
-    <p class="note">Right = winning more than your scoring deserves.</p>
     <div class="chart" id="c-luck" data-source="standings_2026"></div>
    </div>
   </div>
@@ -218,24 +213,20 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
  <section class="pane" id="hist">
   <div class="card" id="alltime-card">
    <h2>All-time standings, 2016–2025</h2>
-   <p class="note">Titles count 2014–2025; records and points are 2016–2025 regular season. Close games were decided by under 10 points. Playoff W-L counts championship-bracket games only. Click a header to sort.</p>
    <div class="hscroll"><table id="t-all" data-source="alltime" data-row-key="owner"></table></div>
   </div>
   <div class="grid">
    <div class="card" id="titles-card">
     <h2>Championships</h2>
-    <p class="note">Title-game winner each season. 2014–2015 champions are from league records; ESPN has no data for those years.</p>
     <table id="t-champ" data-source="champs" data-row-key="season"></table>
    </div>
    <div class="card" id="winpct-card">
     <h2>Regular-season win %</h2>
-    <p class="note">2016–2025; dashed line at .500.</p>
     <div class="chart tall" id="c-winpct" data-source="alltime"></div>
    </div>
   </div>
   <div class="card" id="finish-card">
    <h2>Final finish by season</h2>
-   <p class="note">ESPN final rank; darker = better. 🏆 = champion, 💩 = last place. Blank = not in the league that year.</p>
    <div class="hscroll"><div class="chart" id="c-finish" data-source="seasons"></div></div>
   </div>
   <div class="card" id="pf-card">
@@ -248,7 +239,6 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
  <section class="pane" id="h2h">
   <div class="card" id="matrix-card">
    <h2>Head-to-head matrix</h2>
-   <p class="note">Row owner's record vs. column owner, 2016–2026, regular season plus championship-bracket playoffs.</p>
    <div class="hscroll"><div class="chart tall" id="c-matrix" data-source="h2h"></div></div>
   </div>
   <div class="card" id="rival-card">
@@ -261,30 +251,26 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
  <section class="pane" id="draft">
   <div class="card" id="board-card">
    <h2>Draft board</h2>
-   <p class="note">Each pick with the player's fantasy points that season in league scoring. Color = value vs. a typical pick at that slot (green beat it, red fell short). 2026 is through week 9.</p>
    <div class="ctl">Season <select id="sel-draft"></select></div>
    <div class="legend"><span><i style="background:var(--color-ok)"></i>Beat the slot</span><span><i style="background:var(--color-bad)"></i>Fell short</span></div>
    <div class="hscroll"><div id="c-board" data-source="draft_value" style="min-height:300px"></div></div>
   </div>
   <div class="grid">
-   <div class="card" id="steal-card"><h2>Biggest steals</h2><p class="note">Selected season; points above what that draft slot usually returns.</p><table id="t-steal" data-source="draft_value" data-row-key="season,overall"></table></div>
-   <div class="card" id="bust-card"><h2>Biggest busts</h2><p class="note">Selected season; points below what that draft slot usually returns.</p><table id="t-bust" data-source="draft_value" data-row-key="season,overall"></table></div>
+   <div class="card" id="steal-card"><h2>Biggest steals</h2><table id="t-steal" data-source="draft_value" data-row-key="season,overall"></table></div>
+   <div class="card" id="bust-card"><h2>Biggest busts</h2><table id="t-bust" data-source="draft_value" data-row-key="season,overall"></table></div>
   </div>
   <div class="grid">
    <div class="card" id="grade-card">
     <h2>Who drafts best</h2>
-    <p class="note">Average points above slot expectation per pick, 2016–2025.</p>
     <div class="chart tall" id="c-grade" data-source="draft_grades"></div>
    </div>
    <div class="card" id="tend-card">
     <h2>Early-round tendencies</h2>
-    <p class="note">Share of each owner's rounds 1–4 picks by position, 2016–2026. Darker = bigger share.</p>
     <div class="hscroll"><table id="t-tend" class="heat" data-source="draft_tendencies" data-row-key="owner"></table></div>
    </div>
   </div>
   <div class="card" id="grade-table-card">
    <h2>Draft report card</h2>
-   <p class="note">2016–2025. Early hit rate = share of rounds 1–3 picks that beat their slot.</p>
    <div class="hscroll"><table id="t-grade" data-source="draft_grades" data-row-key="owner"></table></div>
   </div>
   <div class="card" id="r1-card">
@@ -298,19 +284,16 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
   <div class="grid">
    <div class="card" id="eff-card">
     <h2>Lineup efficiency</h2>
-    <p class="note">Points started ÷ best possible lineup from the same roster, 2018–2025 (ESPN has no bench data before 2018).</p>
     <div class="chart tall" id="c-eff" data-source="lineup_iq"></div>
    </div>
    <div class="card" id="src-card">
     <h2>Where starting points come from</h2>
-    <p class="note">2018–2025 starting points by how the player was acquired that season.</p>
     <div class="legend" data-source="lineup_iq"><span><i style="background:var(--cds-chart-muted)"></i>Own draft picks</span><span><i id="lg-pk"></i>Waiver & free-agent pickups</span><span><i id="lg-tr"></i>Trades</span></div>
     <div class="chart tall" id="c-src" data-source="lineup_iq"></div>
    </div>
   </div>
   <div class="card" id="iq-card">
    <h2>Manager report card, 2018–2025</h2>
-   <p class="note">Bench left = points per week that a perfect lineup would have added. Lineup losses = games lost that the best possible lineup would have won. Perfect weeks = started the optimal lineup.</p>
    <div class="hscroll"><table id="t-iq" data-source="lineup_iq" data-row-key="owner"></table></div>
   </div>
  </section>
@@ -319,13 +302,11 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
   <div class="grid">
    <div class="card" id="mv-card">
     <h2>Moves per owner, 2026</h2>
-    <p class="note">Free-agent and waiver adds so far. No trades yet this season.</p>
     <div class="legend" data-source="moves_summary"><span><i id="lg-fa"></i>Free agent</span><span><i id="lg-wv"></i>Waiver</span></div>
     <div class="chart" id="c-moves" data-source="moves_summary"></div>
    </div>
    <div class="card" id="act-card">
     <h2>Most active managers, 2018–2025</h2>
-    <p class="note">Total adds; label shows trades.</p>
     <div class="chart tall" id="c-act" data-source="lineup_iq"></div>
    </div>
   </div>
@@ -336,28 +317,25 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
   </div>
   <div class="card" id="pick-card">
    <h2>Best pickups ever</h2>
-   <p class="note">Waiver and free-agent adds ranked by points they scored in the adding owner's starting lineup that season, 2018–2026.</p>
    <div class="scroll"><table id="t-pick" data-source="pickups" data-row-key="season,owner,player"></table></div>
   </div>
   <div class="card" id="trade-card">
    <h2>Trade history</h2>
-   <p class="note">Every accepted trade on ESPN, 2018–2026.</p>
    <table id="t-trade" data-source="trades" data-row-key="season,week,owner_b"></table>
   </div>
  </section>
 
  <section class="pane" id="rec">
   <div class="grid">
-   <div class="card" id="hi-card"><h2>Highest weekly scores</h2><p class="note">Regular season, 2016–2026.</p><table id="t-hi" data-source="top_scores" data-row-key="season,week,owner"></table></div>
-   <div class="card" id="lo-card"><h2>Lowest weekly scores</h2><p class="note">Regular season, 2016–2026.</p><table id="t-lo" data-source="low_scores" data-row-key="season,week,owner"></table></div>
+   <div class="card" id="hi-card"><h2>Highest weekly scores</h2><table id="t-hi" data-source="top_scores" data-row-key="season,week,owner"></table></div>
+   <div class="card" id="lo-card"><h2>Lowest weekly scores</h2><table id="t-lo" data-source="low_scores" data-row-key="season,week,owner"></table></div>
   </div>
   <div class="grid">
-   <div class="card" id="blow-card"><h2>Biggest blowouts</h2><p class="note">Regular season.</p><table id="t-blow" data-source="notable" data-row-key="category,season,week"></table></div>
-   <div class="card" id="close-card"><h2>Closest games</h2><p class="note">Regular season.</p><table id="t-close" data-source="notable" data-row-key="category,season,week"></table></div>
+   <div class="card" id="blow-card"><h2>Biggest blowouts</h2><table id="t-blow" data-source="notable" data-row-key="category,season,week"></table></div>
+   <div class="card" id="close-card"><h2>Closest games</h2><table id="t-close" data-source="notable" data-row-key="category,season,week"></table></div>
   </div>
   <div class="card" id="dist-card">
    <h2>Weekly score distribution by owner</h2>
-   <p class="note">Each dot is one regular-season week, 2016–2026; bar = owner's median.</p>
    <div class="chart tall" id="c-dist" data-source="weekly"></div>
   </div>
  </section>
@@ -793,14 +771,14 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     const wcd = dash.data('wildcard_spot'), twc = document.getElementById('t-wc'), wcs = document.getElementById('wc-sum');
     if (wcd.status === 'ok' && wcd.data.length) {
       const h = wcd.data[0];
-      wcs.textContent = `${h.owner.split(' ')[0]} holds it with ${h.weeks_left} week${h.weeks_left === 1 ? '' : 's'} to go.`;
+      if (wcs) wcs.textContent = `${h.owner.split(' ')[0]} holds it with ${h.weeks_left} week${h.weeks_left === 1 ? '' : 's'} to go.`;
       GB.table(twc, wcd.data, [
         {key: 'owner', label: 'Team', html: (v, r) => `${r.holder ? `<span class="wc-tag" style="background:${dash.colors[1]}">WC</span>` : ''}${GB.esc(v)}<span class="tm">${GB.esc(r.record)}</span>`},
         {key: 'points_for', label: 'PF', num: true, fmt: f2},
         {key: 'gap', label: 'Back', num: true, fmt: (v, r) => r.holder ? '—' : f2(v)},
         {key: 'per_week', label: 'Needs / wk', num: true, fmt: (v, r) => r.holder ? '—' : '+' + f1(v)}], ['owner']);
       twc.querySelectorAll('tbody tr').forEach((tr, i) => { if (wcd.data[i].holder) tr.classList.add('wc-hold'); });
-    } else { twc.innerHTML = ''; wcs.textContent = ''; }
+    } else { twc.innerHTML = ''; if (wcs) wcs.textContent = ''; }
     // headline tiles
     const setK = (id, big, sub) => { const b = document.getElementById(id), sb = document.getElementById(id + '-sub'); if (b) { b.textContent = big; b.classList.remove('dash-skeleton'); } if (sb) sb.textContent = sub; };
     const kTw = dash.data('top_weekly'), kSt = dash.data('standings_2026'), kPw = dash.data('power_2026');
