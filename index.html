@@ -65,7 +65,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 .gb td:has(> .tm){white-space:nowrap} .gb td .tm{margin-left:.5em;display:inline-block;max-width:8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
 .gb .legend-inline{display:flex;gap:var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-bottom:var(--cds-gap-sm)}
 .gb .legend-inline i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
-.gb .grid-race{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:var(--cds-gap-md);align-items:start}
+.gb .grid-race{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:var(--cds-gap-md);align-items:start}
 @media (max-width:980px){.gb .grid-race{grid-template-columns:1fr}}
 @media (max-width:600px){.gb td .tm{display:none}.gb .kpi .big{font-size:20px}.gb .kpi{padding:var(--cds-pad-md)}}
 .gb .stack{display:flex;flex-direction:column;gap:var(--cds-gap-md);min-width:0}
@@ -93,6 +93,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 .gb .glance .kpi .big{font-size:22px}
 @media (max-width:600px){.gb .glance .kpi .big{font-size:18px}}
 .gb .up{color:var(--color-ok)} .gb .dn{color:var(--color-bad)}
+#t-stand td,#t-stand th{white-space:nowrap} #t-stand td .tm{max-width:6.5rem}
 .gb td.tier{background:color-mix(in srgb,var(--tc) 30%,transparent)}
 .gb td.tier1{--tc:#2bb673} .gb td.tier2{--tc:#9bd35a} .gb td.tier3{--tc:#f2d24b} .gb td.tier4{--tc:#f0954a} .gb td.tier5{--tc:#e5534b}
 .gb .tiers{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-bottom:var(--cds-gap-sm)}
@@ -166,7 +167,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
   <div class="grid-race">
   <div class="card" id="standings-card">
    <h2>2026 standings</h2>
-   <p class="note">Sorted by power ranking. Teams with close power scores share a tier color; a big gap starts a new tier. Seeds 1–5 go by record and the wildcard (6th seed) to the most points among everyone else. All-play is your record if you played every team every week; luck is actual wins minus the wins that all-play record would give you.</p>
+   <p class="note">Sorted by power ranking. Teams with close power scores share a tier color; a big gap starts a new tier. Seeds 1–5 go by record and the wildcard (6th seed) to the most points among everyone else. All-play is your record if you played every team every week; expected wins is how many games that all-play rate works out to, and luck is actual wins minus expected wins.</p>
    <div class="tiers"><span><i style="--tc:#2bb673"></i>Tier 1</span><span><i style="--tc:#9bd35a"></i>Tier 2</span><span><i style="--tc:#f2d24b"></i>Tier 3</span><span><i style="--tc:#f0954a"></i>Tier 4</span><span><i style="--tc:#e5534b"></i>Tier 5</span></div>
    <div class="hscroll"><table id="t-stand" data-source="standings_2026" data-row-key="owner"></table></div>
   </div>
@@ -772,7 +773,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     const s = dash.data('standings_2026'), pw = dash.data('power_2026'), po = dash.data('playoff_odds'), ts = document.getElementById('t-stand');
     if (s.status === 'ok') {
       const P = {}, O = {}; (pw.status === 'ok' ? pw.data : []).forEach(r => P[r.owner] = r); (po.status === 'ok' ? po.data : []).forEach(r => O[r.owner] = r);
-      const rows = s.data.map(r => ({...r, power_rank: P[r.owner]?.power_rank, tier: P[r.owner]?.tier, playoff_pct: O[r.owner]?.playoff_pct, top2_pct: O[r.owner]?.top2_pct}));
+      const rows = s.data.map(r => ({...r, exp_wins: (() => { const [w, l] = r.record.split('-').map(Number); return r.allplay_pct * (w + l); })(), power_rank: P[r.owner]?.power_rank, tier: P[r.owner]?.tier, playoff_pct: O[r.owner]?.playoff_pct, top2_pct: O[r.owner]?.top2_pct}));
       const MV = {}; (dash.data('power_movers').data || []).forEach(r => MV[r.owner] = r.change);
       if (ts._sortKey === undefined) { ts._sortKey = 'power_rank'; ts._dir = 1; }
       const tc = (v, r) => r.tier ? `tier tier${r.tier}` : '';
@@ -782,6 +783,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
         {key: 'record', label: 'W-L', sort: r => +r.record.split('-')[0] * 1e5 + r.points_for},
         {key: 'points_for', label: 'PF', num: true, fmt: f2}, {key: 'points_against', label: 'PA', num: true, fmt: f2},
         {key: 'allplay', label: 'All-play', sort: r => r.allplay_pct},
+        {key: 'exp_wins', label: 'Exp. W', num: true, fmt: v => v == null ? '' : f1(v), sort: r => r.exp_wins},
         {key: 'luck', label: 'Luck', num: true, fmt: v => (v > 0 ? '+' : v < 0 ? '−' : '') + f1(Math.abs(v)), cls: v => v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : ''},
         {key: 'seed', label: 'Seed', num: true, asc: true}
       ], ['owner'], true);
