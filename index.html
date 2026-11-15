@@ -1115,8 +1115,10 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     hbar('c-luck', 'standings_2026', d => [...d].sort((a, b) => b.luck - a.luck).map(r => ({...r, label: r.owner, value: r.luck})),
       {color: r => r.value >= 0 ? dash.colors[0] : dash.colors[1], ref: 0, text: r => (r.value > 0 ? '+' : '') + GB.f2(r.value), tip: r => `${GB.esc(r.owner)}<br>${r.record} actual · ${r.allplay} all-play<br>Luck ${(r.luck > 0 ? '+' : '') + GB.f2(r.luck)} wins`});
     const lgIn = document.getElementById('lg-in'); if (lgIn) lgIn.style.background = dash.colors[0];
+    const CL = new Set((dash.data('clinch_scenarios').data || []).filter(r => r.status === 'Clinched').map(r => r.owner));
+    const oddsTxt = r => CL.has(r.owner) ? '100% ✓' : r.value >= 0.995 ? '>99%' : r.value < 0.005 ? '<1%' : GB.pc(r.value);
     hbar('c-odds', 'playoff_odds', d => d.map(r => ({...r, label: `${r.owner} · ${r.record}`, value: r.playoff_pct})),
-      {min: 0, max: 1, color: r => r.top5_now ? dash.colors[0] : 'var(--cds-chart-muted)', text: r => GB.pc(r.value), tip: r => `${GB.esc(r.owner)} (${r.record})<br>Playoffs ${GB.pc(r.playoff_pct)} · top-2 seed ${GB.pc(r.top2_pct)}<br>Last place ${GB.pc(r.last_pct)} · projected ${r.proj_wins} wins`});
+      {min: 0, max: 1, color: r => r.top5_now ? dash.colors[0] : 'var(--cds-chart-muted)', text: oddsTxt, tip: r => `${GB.esc(r.owner)} (${r.record})<br>Playoffs ${GB.pc(r.playoff_pct)} · top-2 seed ${GB.pc(r.top2_pct)}<br>Last place ${GB.pc(r.last_pct)} · projected ${r.proj_wins} wins`});
     hbar('c-winpct', 'alltime', d => [...d].sort((a, b) => b.win_pct - a.win_pct).map(r => ({...r, label: r.owner, value: r.win_pct})),
       {min: 0, max: .8, ref: .5, refDash: true, refLabel: '.500', color: r => r.titles > 0 ? dash.colors[0] : 'var(--cds-chart-muted)', text: r => d3.format('.3f')(r.value) + (r.titles ? ` · ${r.titles} title${r.titles > 1 ? 's' : ''}` : ''), tip: r => `${GB.esc(r.owner)}<br>${r.record} (${d3.format('.3f')(r.win_pct)}) over ${r.seasons} seasons`});
     hbar('c-grade', 'draft_grades', d => d.map(r => ({...r, label: r.owner, value: r.avg_value})),
