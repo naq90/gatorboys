@@ -756,13 +756,14 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       if (ts._sortKey === undefined) { ts._sortKey = 'power_rank'; ts._dir = 1; }
       const tc = (v, r) => r.tier ? `tier tier${r.tier}` : '';
       ts._redraw = () => GB.table(ts, rows, [
-        {key: 'power_rank', label: 'Rank', num: true, asc: true, src: 'power_2026', cls: tc, html: (v, r) => { const c = MV[r.owner]; return `${v ?? ''}${c > 0 ? ` <span class="up" style="font-size:.8em">▲${c}</span>` : c < 0 ? ` <span class="dn" style="font-size:.8em">▼${-c}</span>` : ''}`; }},
+        {key: 'power_rank', label: 'Rank', num: true, asc: true, src: 'power_2026', cls: tc},
+        {key: 'move', label: '+/−', num: true, cls: tc, sort: r => MV[r.owner] ?? 0, html: (v, r) => { const c = MV[r.owner]; return c > 0 ? `<span class="up">▲${c}</span>` : c < 0 ? `<span class="dn">▼${-c}</span>` : '<span style="opacity:.4">–</span>'; }},
         {key: 'owner', label: 'Team', cls: tc, html: (v, r) => `${GB.esc(v)}<span class="tm">${GB.esc(r.team)}</span>`},
         {key: 'record', label: 'W-L', sort: r => +r.record.split('-')[0] * 1e5 + r.points_for},
-        {key: 'points_for', label: 'PF', num: true, fmt: f2}, {key: 'points_against', label: 'PA', num: true, fmt: f2},
-        {key: 'allplay', label: 'All-play', sort: r => r.allplay_pct},
         {key: 'exp_wins', label: 'Exp. W', num: true, fmt: v => v == null ? '' : f1(v), sort: r => r.exp_wins},
         {key: 'luck', label: 'Luck', num: true, fmt: v => (v > 0 ? '+' : v < 0 ? '−' : '') + f1(Math.abs(v)), cls: v => v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : ''},
+        {key: 'points_for', label: 'PF', num: true, fmt: f2}, {key: 'points_against', label: 'PA', num: true, fmt: f2},
+        {key: 'allplay', label: 'All-play', sort: r => r.allplay_pct},
         {key: 'seed', label: 'Seed', num: true, asc: true}
       ], ['owner'], true);
       ts._redraw();
