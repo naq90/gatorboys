@@ -99,7 +99,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 .gb .tiers{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-bottom:var(--cds-gap-sm)}
 .gb .tiers span{display:inline-flex;align-items:center;gap:.35em} .gb .tiers i{width:10px;height:10px;border-radius:3px;background:color-mix(in srgb,var(--tc) 55%,transparent)}
 .gb .card > .hd{margin-bottom:var(--cds-gap-md)}
-.gb .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
+.gb .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,19rem),1fr));gap:var(--cds-gap-md)}
 .gb .card h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0 0 var(--cds-gap-md)}
 .gb .card .hd h2{margin:0}
 .gb .card .note{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:var(--cds-gap-xs) 0 var(--cds-gap-md)}
@@ -195,6 +195,10 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     <div class="chips" id="tw-tally" data-source="top_weekly"></div>
     <div class="lab2">By week</div>
     <div class="rows" id="tw-rows" data-source="top_weekly"></div>
+   </div>
+   <div class="card" id="babies-card">
+    <div class="hd"><h2>Gator Babies</h2><span class="pill"><b>16</b> and counting</span></div>
+    <div class="rows"><div class="rw"><span class="wk">1</span><span class="nm">Alper</span><span class="sc" title="3 kids">👶👶👶</span></div><div class="rw"><span class="wk">1</span><span class="nm">George</span><span class="sc" title="3 kids">👶👶👶</span></div><div class="rw"><span class="wk">3</span><span class="nm">John</span><span class="sc" title="2 kids">👶👶</span></div><div class="rw"><span class="wk">3</span><span class="nm">Scott</span><span class="sc" title="2 kids">👶👶</span></div><div class="rw"><span class="wk">3</span><span class="nm">Britt</span><span class="sc" title="2 kids">👶👶</span></div><div class="rw"><span class="wk">6</span><span class="nm">Eric</span><span class="sc" title="1 kid">👶</span></div><div class="rw"><span class="wk">6</span><span class="nm">Fawwaz</span><span class="sc" title="1 kid">👶</span></div><div class="rw"><span class="wk">6</span><span class="nm">Shahryar</span><span class="sc" title="1 kid">👶</span></div><div class="rw"><span class="wk">6</span><span class="nm">Peter</span><span class="sc" title="1 kid">👶</span></div></div>
    </div>
   </div>
   <div class="grid">
@@ -901,6 +905,13 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
   };
   GB.drawTables = drawTables;
   dash.onData(drawTables);
+  // 2026 tab shows first names only
+  (() => { const pane = document.getElementById('now'); if (!pane) return; let full = [];
+    const shorten = () => { if (!full.length) { const s = dash.data('seasons'); if (s.status !== 'ok') return; full = [...new Set(s.data.filter(r => +r.season === 2026).map(r => r.owner))].filter(o => o.includes(' ')).sort((a, b) => b.length - a.length); }
+      const w = document.createTreeWalker(pane, NodeFilter.SHOW_TEXT); let n;
+      while ((n = w.nextNode())) { let t = n.nodeValue, c = false; for (const o of full) if (t.includes(o)) { t = t.split(o).join(o.split(' ')[0]); c = true; } if (c) n.nodeValue = t; } };
+    dash.onData(() => setTimeout(shorten, 0));
+    new MutationObserver(() => shorten()).observe(pane, {subtree: true, childList: true, characterData: true}); })();
   document.getElementById('sel-h2h').addEventListener('change', () => GB.drawH2H());
   ['sel-draft', 'sel-r1'].forEach(id => document.getElementById(id).addEventListener('change', () => { GB.drawDraftTables(); GB.redraw && GB.redraw(); }));
   document.getElementById('sel-feed').addEventListener('change', () => GB.drawMoveTables());
