@@ -85,10 +85,10 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 @media (max-width:600px){.gb .pp-row{grid-template-columns:1.4rem minmax(0,1fr) 4rem 2.4rem}.gb .pp-note{grid-column:2 / -1;margin-top:-.2rem}}
 .gb tr.wc-hold td{font-weight:var(--cds-font-weight-medium)} .gb .wc-tag{display:inline-block;font-size:.72em;font-weight:var(--cds-font-weight-medium);color:#fff;border-radius:4px;padding:.05em .4em;margin-right:.45em;vertical-align:1px}
 .gb .glance{padding:var(--cds-pad-md) var(--cds-pad-lg)}
-.gb .glance .kpis{gap:0;grid-template-columns:repeat(4,minmax(0,1fr))}
+.gb .glance .kpis{gap:0;grid-template-columns:repeat(3,minmax(0,1fr))}
 .gb .glance .kpi{background:none;border:0;border-radius:0;padding:var(--cds-pad-sm) var(--cds-pad-lg);border-left:1px solid var(--color-border-line);box-shadow:none}
-.gb .glance .kpi:nth-child(4n+1){border-left:0;padding-left:0}
-.gb .glance .kpi:nth-child(n+5){border-top:1px solid var(--color-border-line);padding-top:var(--cds-pad-md);margin-top:var(--cds-pad-sm)}
+.gb .glance .kpi:nth-child(3n+1){border-left:0;padding-left:0}
+.gb .glance .kpi:nth-child(n+4){border-top:1px solid var(--color-border-line);padding-top:var(--cds-pad-md);margin-top:var(--cds-pad-sm)}
 @media (max-width:700px){.gb .glance .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.gb .glance .kpi,.gb .glance .kpi:nth-child(n){border-left:0;padding:var(--cds-pad-sm) 0;margin-top:0;border-top:1px solid var(--color-border-line)}.gb .glance .kpi:nth-child(-n+2){border-top:0}.gb .glance .kpi:nth-child(even){padding-left:var(--cds-pad-md);border-left:1px solid var(--color-border-line)}}
 .gb .glance .kpi .big{font-size:22px}
 @media (max-width:600px){.gb .glance .kpi .big{font-size:18px}}
@@ -130,7 +130,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 </style>
 <div class="gb">
  <header>
-  <h1>Gator Boys league dashboard</h1>
+  <h1>Gator Boys League Dashboard</h1>
   <p class="take" id="takeaway"><span data-source="headline" data-field="leader" data-row="0" class="dash-skeleton">—</span> leads 2026 at <span data-source="headline" data-field="leader_record" data-row="0">—</span> and has a <span data-source="headline" data-field="leader_odds" data-row="0">—</span> chance at the playoffs; <span data-source="headline" data-field="defending" data-row="0">—</span> is the defending champ. Champions since 2014; stats 2016–2026 from ESPN.</p>
  </header>
  <nav class="tabs" role="tablist">
@@ -148,8 +148,6 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
   <div class="kpis">
    <div class="kpi"><div class="lab" id="kpi-hs-lab" data-source="top_weekly">High score</div><div class="big dash-skeleton" id="kpi-hs" data-source="top_weekly">—</div><div class="sub" id="kpi-hs-sub" data-source="top_weekly">—</div></div>
    <div class="kpi"><div class="lab" id="kpi-lo-lab" data-source="weekly">Low score</div><div class="big dash-skeleton" id="kpi-lo" data-source="weekly">—</div><div class="sub" id="kpi-lo-sub" data-source="weekly">—</div></div>
-   <div class="kpi"><div class="lab" id="kpi-bl-lab" data-source="blunders">Bench blunder</div><div class="big dash-skeleton" id="kpi-bl" data-source="blunders">—</div><div class="sub" id="kpi-bl-sub" data-source="blunders">—</div></div>
-   <div class="kpi"><div class="lab" id="kpi-pk-lab" data-source="weekpickups">Pickup of the week</div><div class="big dash-skeleton" id="kpi-pk" data-source="weekpickups">—</div><div class="sub" id="kpi-pk-sub" data-source="weekpickups">—</div></div>
    <div class="kpi"><div class="lab">Best record</div><div class="big dash-skeleton" id="kpi-rec" data-source="standings_2026">—</div><div class="sub" id="kpi-rec-sub" data-source="standings_2026">—</div></div>
    <div class="kpi"><div class="lab">#1 in power rankings</div><div class="big dash-skeleton" id="kpi-pw" data-source="power_2026">—</div><div class="sub" id="kpi-pw-sub" data-source="power_movers">—</div></div>
    <div class="kpi"><div class="lab">Survivor pool</div><div class="big dash-skeleton" id="kpi-surv" data-source="survivor">—</div><div class="sub" id="kpi-surv-sub" data-source="survivor">—</div></div>
@@ -798,15 +796,9 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       if (kMv.status === 'ok' && kMv.data.length) { const up = kMv.data.slice().sort((a, b) => b.change - a.change)[0], dn = kMv.data.slice().sort((a, b) => a.change - b.change)[0];
         sb.innerHTML = (up.change > 0 ? `<span class="up">▲${up.change}</span> ${GB.esc(up.owner.split(' ')[0])}` : 'No risers') + ' · ' + (dn.change < 0 ? `<span class="dn">▼${-dn.change}</span> ${GB.esc(dn.owner.split(' ')[0])}` : 'no fallers'); }
       else sb.textContent = `Then ${p[1].owner.split(' ')[0]}, ${p[2].owner.split(' ')[0]}`; }
-    const kWk = dash.data('weekly'), kBl = dash.data('blunders'), kPk = dash.data('weekpickups');
+    const kWk = dash.data('weekly');
     if (kWk.status === 'ok') { const w = kWk.data.filter(r => +r.season === 2026); const mw = d3.max(w, r => +r.week); const lo = d3.least(w.filter(r => +r.week === mw), r => +r.points);
       if (lo) { document.getElementById('kpi-lo-lab').textContent = `Low score · week ${mw} 💩`; setK('kpi-lo', lo.owner, `${f2(+lo.points)} pts`); } }
-    if (kBl.status === 'ok' && kBl.data.length) { const mw = d3.max(kBl.data, r => +r.week); const b = d3.greatest(kBl.data.filter(r => +r.week === mw), r => +r.pts_left);
-      document.getElementById('kpi-bl-lab').textContent = `Bench blunder · week ${mw}`;
-      setK('kpi-bl', b.owner, `Benched ${b.benched} (${f1(+b.benched_pts)}) for ${b.started} (${f1(+b.started_pts)})${+b.cost_game ? ' · cost him the game' : ''}`); }
-    if (kPk.status === 'ok' && kPk.data.length) { const mw = d3.max(kPk.data, r => +r.week); const p = d3.greatest(kPk.data.filter(r => +r.week === mw), r => +r.pts);
-      document.getElementById('kpi-pk-lab').textContent = `Pickup of the week · week ${mw}`;
-      setK('kpi-pk', p.player, `${f2(+p.pts)} pts for ${p.owner.split(' ')[0]} · ${p.how}`); }
     if (kTw.status === 'ok' && kTw.data.length) { const c = d3.rollups(kTw.data, v => v.length, r => r.owner).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
       const top = c.filter(x => x[1] === c[0][1]);
       setK('kpi-pm', top.map(x => x[0]).join(' & '), `$${c[0][1] * 25} leads · $${kTw.data.length * 25} paid out so far`); }
