@@ -93,6 +93,10 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 .gb .glance .kpi .big{font-size:22px}
 @media (max-width:600px){.gb .glance .kpi .big{font-size:18px}}
 .gb .up{color:var(--color-ok)} .gb .dn{color:var(--color-bad)}
+.gb td.tier{background:color-mix(in srgb,var(--tc) 30%,transparent)}
+.gb td.tier1{--tc:#2bb673} .gb td.tier2{--tc:#9bd35a} .gb td.tier3{--tc:#f2d24b} .gb td.tier4{--tc:#f0954a} .gb td.tier5{--tc:#e5534b}
+.gb .tiers{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin-bottom:var(--cds-gap-sm)}
+.gb .tiers span{display:inline-flex;align-items:center;gap:.35em} .gb .tiers i{width:10px;height:10px;border-radius:3px;background:color-mix(in srgb,var(--tc) 55%,transparent)}
 .gb .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,22rem),1fr));gap:var(--cds-gap-md)}
 .gb .card h2{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
 .gb .card .note{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:var(--cds-gap-xs) 0 var(--cds-gap-md)}
@@ -162,7 +166,8 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
   <div class="grid-race">
   <div class="card" id="standings-card">
    <h2>2026 standings</h2>
-   <p class="note">Seeds 1–5 go by record; the wildcard (6th seed) goes to the most points among everyone else. All-play is your record if you played every team every week; luck is actual wins minus the wins that all-play record would give you. Power blends all-play, points and the last 3 weeks.</p>
+   <p class="note">Sorted by power ranking. Teams with close power scores share a tier color; a big gap starts a new tier. Seeds 1–5 go by record and the wildcard (6th seed) to the most points among everyone else. All-play is your record if you played every team every week; luck is actual wins minus the wins that all-play record would give you.</p>
+   <div class="tiers"><span><i style="--tc:#2bb673"></i>Tier 1</span><span><i style="--tc:#9bd35a"></i>Tier 2</span><span><i style="--tc:#f2d24b"></i>Tier 3</span><span><i style="--tc:#f0954a"></i>Tier 4</span><span><i style="--tc:#e5534b"></i>Tier 5</span></div>
    <div class="hscroll"><table id="t-stand" data-source="standings_2026" data-row-key="owner"></table></div>
   </div>
   <div class="card" id="odds-card">
@@ -371,7 +376,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     }).sort((a, b) => a.seed - b.seed)
   });
   dash.calc('power_2026', {
-    title: '2026 power rankings', description: '50% all-play win rate, 30% points scored, 20% average of the last 3 weeks (each scaled 0–1 across the league).',
+    title: '2026 power rankings', description: '50% all-play win rate, 30% points scored, 20% average of the last 3 weeks (each scaled 0–1 across the league). Tiers split the sorted scores into 5 natural groups, so teams with close scores share a tier and a big gap starts a new one.',
     inputs: ['standings_2026', 'weekly'],
     fn: (standings_2026, weekly) => {
       const wk = weekly.filter(r => r.season == 2026);
@@ -382,6 +387,13 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       const rows = standings_2026.map(s => ({owner: s.owner, last3_avg: +last3[s.owner].toFixed(1),
         power_score: +(0.5 * sc(s.allplay_pct, ap) + 0.3 * sc(s.points_for, pfs) + 0.2 * sc(last3[s.owner], l3)).toFixed(3)}));
       rows.sort((a, b) => b.power_score - a.power_score); rows.forEach((r, i) => r.power_rank = i + 1);
+      // tiers: split the sorted power scores into 5 natural groups (least spread within each group)
+      const v = rows.map(r => r.power_score), n = v.length, k = Math.min(5, n);
+      const cost = (i, j) => { let m = 0; for (let q = i; q <= j; q++) m += v[q]; m /= (j - i + 1); let c = 0; for (let q = i; q <= j; q++) c += (v[q] - m) ** 2; return c; };
+      const D = Array.from({length: k + 1}, () => Array(n).fill(Infinity)), Pv = Array.from({length: k + 1}, () => Array(n).fill(0));
+      for (let j = 0; j < n; j++) D[1][j] = cost(0, j);
+      for (let c = 2; c <= k; c++) for (let j = c - 1; j < n; j++) for (let i = c - 1; i <= j; i++) { const x = D[c - 1][i - 1] + cost(i, j); if (x < D[c][j]) { D[c][j] = x; Pv[c][j] = i; } }
+      let j = n - 1; for (let c = k; c >= 1; c--) { const i = c > 1 ? Pv[c][j] : 0; for (let q = i; q <= j; q++) rows[q].tier = c; j = i - 1; }
       return rows;
     }
   });
@@ -760,15 +772,18 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     const s = dash.data('standings_2026'), pw = dash.data('power_2026'), po = dash.data('playoff_odds'), ts = document.getElementById('t-stand');
     if (s.status === 'ok') {
       const P = {}, O = {}; (pw.status === 'ok' ? pw.data : []).forEach(r => P[r.owner] = r); (po.status === 'ok' ? po.data : []).forEach(r => O[r.owner] = r);
-      const rows = s.data.map(r => ({...r, power_rank: P[r.owner]?.power_rank, playoff_pct: O[r.owner]?.playoff_pct, top2_pct: O[r.owner]?.top2_pct}));
+      const rows = s.data.map(r => ({...r, power_rank: P[r.owner]?.power_rank, tier: P[r.owner]?.tier, playoff_pct: O[r.owner]?.playoff_pct, top2_pct: O[r.owner]?.top2_pct}));
       const MV = {}; (dash.data('power_movers').data || []).forEach(r => MV[r.owner] = r.change);
+      if (ts._sortKey === undefined) { ts._sortKey = 'power_rank'; ts._dir = 1; }
+      const tc = (v, r) => r.tier ? `tier tier${r.tier}` : '';
       ts._redraw = () => GB.table(ts, rows, [
-        {key: 'seed', label: 'Seed', num: true, asc: true}, {key: 'owner', label: 'Team', html: (v, r) => `${GB.esc(v)}<span class="tm">${GB.esc(r.team)}</span>`},
+        {key: 'power_rank', label: 'Rank', num: true, asc: true, src: 'power_2026', cls: tc, html: (v, r) => { const c = MV[r.owner]; return `${v ?? ''}${c > 0 ? ` <span class="up" style="font-size:.8em">▲${c}</span>` : c < 0 ? ` <span class="dn" style="font-size:.8em">▼${-c}</span>` : ''}`; }},
+        {key: 'owner', label: 'Team', cls: tc, html: (v, r) => `${GB.esc(v)}<span class="tm">${GB.esc(r.team)}</span>`},
         {key: 'record', label: 'W-L', sort: r => +r.record.split('-')[0] * 1e5 + r.points_for},
         {key: 'points_for', label: 'PF', num: true, fmt: f2}, {key: 'points_against', label: 'PA', num: true, fmt: f2},
         {key: 'allplay', label: 'All-play', sort: r => r.allplay_pct},
         {key: 'luck', label: 'Luck', num: true, fmt: v => (v > 0 ? '+' : v < 0 ? '−' : '') + f1(Math.abs(v)), cls: v => v > 0.05 ? 'pos' : v < -0.05 ? 'neg' : ''},
-        {key: 'power_rank', label: 'Power', num: true, asc: true, src: 'power_2026', html: (v, r) => { const c = MV[r.owner]; return `${v ?? ''}${c > 0 ? ` <span class="up" style="font-size:.8em">▲${c}</span>` : c < 0 ? ` <span class="dn" style="font-size:.8em">▼${-c}</span>` : ''}`; }}
+        {key: 'seed', label: 'Seed', num: true, asc: true}
       ], ['owner'], true);
       ts._redraw();
     } else ts.innerHTML = '';
