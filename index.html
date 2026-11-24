@@ -182,11 +182,8 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
    <div class="hscroll"><table id="t-wc" data-source="wildcard_spot" data-row-key="owner"></table></div>
   </div>
   <div class="card" id="clinch-card">
-   <h2 id="clinch-title">Scenarios</h2>
-   <div class="sub-h" style="margin-top:0;padding-top:0;border-top:0">Clinch</div>
+   <h2 id="clinch-title">Clinch scenarios</h2>
    <div class="cl-list" id="clinch-list" data-source="clinch_scenarios"></div>
-   <div class="sub-h" id="elim-title">Elimination</div>
-   <div class="cl-list" id="elim-list" data-source="elim_scenarios"></div>
   </div>
   </div>
   </div>
@@ -550,38 +547,6 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       return owners.map(o => ({owner: o, week: maxW, rank: now[o], prev_rank: prev[o], change: prev[o] - now[o]})).sort((a, b) => a.rank - b.rank);
     }
   });
-  dash.calc('elim_scenarios', {
-    title: 'Elimination scenarios for the coming week', description: 'Exact check over every combination of the coming week’s results: a team is knocked out of the top-5-by-record race when, even if it wins every game after that, at least five other teams are guaranteed to finish with more wins (ties count in the team’s favor, since the points tiebreak is unknown). Lists the minimal sets of results that do it. Teams already out of that race can still make the playoffs as the wildcard on points, so nobody is listed as fully eliminated.',
-    inputs: ['seasons', 'schedule'],
-    fn: (seasons, schedule) => {
-      const cur = seasons.filter(r => r.season == 2026), owners = cur.map(r => r.owner), W0 = {}, rec = {};
-      cur.forEach(r => { W0[r.owner] = +r.wins; rec[r.owner] = `${r.wins}-${r.losses}`; });
-      if (!schedule.length) return [];
-      const wk = Math.min(...schedule.map(g => +g.week));
-      const G0 = schedule.filter(g => +g.week === wk), later = schedule.filter(g => +g.week !== wk);
-      const canTop5 = (T, W) => { const W1 = {...W}, rest = []; later.forEach(g => { if (g.home === T || g.away === T) W1[T]++; else rest.push(g); });
-        const tgt = W1[T], n = rest.length;
-        for (let m = 0; m < (1 << n); m++) { const X = {...W1}; rest.forEach((g, i) => X[(m >> i) & 1 ? g.home : g.away]++); let above = 0; for (const q of owners) if (q !== T && X[q] > tgt) above++; if (above < 5) return true; }
-        return false; };
-      const n = G0.length, M = 1 << n, first = o => o.split(' ')[0], out = [];
-      owners.forEach(T => {
-        const ok = []; for (let m = 0; m < M; m++) { const W = {...W0}; G0.forEach((g, i) => W[(m >> i) & 1 ? g.home : g.away]++); ok.push(canTop5(T, W)); }
-        if (ok.every(v => v)) return;
-        if (!ok.some(v => v)) { out.push({owner: T, record: rec[T], week: wk, status: 'Wildcard only', scenarios: []}); return; }
-        const cands = [];
-        for (let p = 0; p < 3 ** n; p++) { const a = []; let x = p; for (let i = 0; i < n; i++) { a.push(x % 3); x = Math.floor(x / 3); }
-          let all = true; for (let m = 0; m < M && all; m++) { let match = true; for (let i = 0; i < n; i++) if (a[i] !== 2 && a[i] !== ((m >> i) & 1)) { match = false; break; } if (match && ok[m]) all = false; }
-          if (all) cands.push(a); }
-        const gen = (a, b) => a.every((v, i) => v === 2 || v === b[i]);
-        const minimal = cands.filter(b => !cands.some(a => a !== b && gen(a, b) && a.some((v, i) => v !== b[i])));
-        const lines = minimal.map(a => { const own = [], oth = []; a.forEach((v, i) => { if (v === 2) return; const g = G0[i], w = v ? g.home : g.away, l = v ? g.away : g.home;
-            if (l === T) own.push('Loses'); else if (w === T) own.push('Wins'); else oth.push(`${first(w)} wins`); }); return own.concat(oth.sort()).join(' & '); })
-          .sort((x, y) => x.length - y.length || x.localeCompare(y));
-        out.push({owner: T, record: rec[T], week: wk, status: 'Can be knocked out', scenarios: lines});
-      });
-      return out.sort((a, b) => (a.status === 'Wildcard only') - (b.status === 'Wildcard only') || W0[b.owner] - W0[a.owner]);
-    }
-  });
   dash.calc('alltime', {
     title: 'All-time standings', description: 'Per owner across completed seasons 2016–2025, titles from the championship list (2014–2025).',
     inputs: ['seasons', 'champs'],
@@ -847,15 +812,9 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     const cs = dash.data('clinch_scenarios'), cl = document.getElementById('clinch-list');
     if (cs.status === 'ok') {
       const wk = cs.data[0]?.week ?? (dash.data('matchups_next').data?.[0]?.week);
-      document.getElementById('clinch-title').textContent = wk ? `Week ${wk} scenarios` : 'Scenarios';
+      document.getElementById('clinch-title').textContent = wk ? `Week ${wk} clinch scenarios` : 'Clinch scenarios';
       cl.innerHTML = !cs.data.length ? `<p class="note" style="margin:0">Nobody can lock up a spot this week.</p>` : cs.data.map(r => `<div class="cl-item" data-row-key="${GB.esc(r.owner)}"><div class="who">${GB.esc(r.owner)}${r.status === 'Clinched' ? ' — clinched ✓' : ' clinches if:'}<span class="rc">${GB.esc(r.record)}</span></div>${r.scenarios.length ? `<ul>${r.scenarios.map(x => `<li>${GB.esc(x)}</li>`).join('')}</ul>` : ''}</div>`).join('');
     } else cl.innerHTML = '';
-    const es = dash.data('elim_scenarios'), el = document.getElementById('elim-list');
-    if (el && es.status === 'ok') {
-      const kn = es.data.filter(r => r.status !== 'Wildcard only'), wo = es.data.filter(r => r.status === 'Wildcard only');
-      el.innerHTML = (!kn.length ? `<p class="note" style="margin:0">Nobody can be knocked out of the top 5 this week.</p>` : kn.map(r => `<div class="cl-item" data-row-key="${GB.esc(r.owner)}"><div class="who">${GB.esc(r.owner)} is out of the top 5 if:<span class="rc">${GB.esc(r.record)}</span></div><ul>${r.scenarios.map(x => `<li>${GB.esc(x)}</li>`).join('')}</ul></div>`).join(''))
-        + (wo.length ? `<p class="note" style="margin:var(--cds-gap-sm) 0 0">Can only get in as the wildcard: ${wo.map(r => `${GB.esc(r.owner)} (${GB.esc(r.record)})`).join(', ')}.</p>` : '');
-    } else if (el) el.innerHTML = '';
     // this week's matchups
     const mu = dash.data('matchups_next'), mg = document.getElementById('mu-grid');
     if (mu.status === 'ok' && mu.data.length) {
