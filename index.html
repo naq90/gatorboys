@@ -158,7 +158,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
    <div class="kpi"><div class="lab">Best record</div><div class="big dash-skeleton" id="kpi-rec" data-source="standings_2026">—</div><div class="sub" id="kpi-rec-sub" data-source="standings_2026">—</div></div>
    <div class="kpi"><div class="lab">#1 in power rankings</div><div class="big dash-skeleton" id="kpi-pw" data-source="power_2026">—</div><div class="sub" id="kpi-pw-sub" data-source="power_movers">—</div></div>
    <div class="kpi"><div class="lab">Survivor pool</div><div class="big dash-skeleton" id="kpi-surv" data-source="survivor">—</div><div class="sub" id="kpi-surv-sub" data-source="survivor">—</div></div>
-   <div class="kpi"><div class="lab">Prize money leader · $25 a week</div><div class="big dash-skeleton" id="kpi-pm" data-source="top_weekly">—</div><div class="sub" id="kpi-pm-sub" data-source="top_weekly">—</div></div>
+   <div class="kpi"><div class="lab">Prize money leader</div><div class="big dash-skeleton" id="kpi-pm" data-source="top_weekly">—</div><div class="sub" id="kpi-pm-sub" data-source="top_weekly">—</div></div>
   </div>
   </div>
   <div class="card" id="matchups-card">
@@ -197,7 +197,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
    </div>
    <div class="card" id="topweek-card">
     <div class="hd"><h2>Top score each week</h2><span class="pill" id="tw-high" data-source="top_weekly"></span></div>
-    <div class="lab2">Prize money</div>
+    <div class="lab2">Prize money · $25 a week + $100 survivor</div>
     <div class="chips" id="tw-tally" data-source="top_weekly"></div>
     <div class="lab2">By week</div>
     <div class="rows" id="tw-rows" data-source="top_weekly"></div>
@@ -755,7 +755,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       sO.innerHTML = out.map(r => `<div class="rw out" data-row-key="${GB.esc(r.owner)}"><span class="wk">Wk ${r.week_out}</span><span class="nm">${GB.esc(r.owner)}</span><span class="sc">${f2(r.score_out)}</span></div>`).join('');
       const kb = document.getElementById('kpi-surv'), ks = document.getElementById('kpi-surv-sub');
       kb.classList.remove('dash-skeleton'); kb.textContent = alive.length === 1 ? alive[0].owner : `${alive.length} left`;
-      ks.textContent = alive.length === 1 ? 'Survivor champion' : alive.map(r => r.owner.split(' ')[0]).join(', ');
+      ks.textContent = alive.length === 1 ? 'Survivor champion · $100' : alive.map(r => r.owner.split(' ')[0]).join(', ');
     } else { sA.innerHTML = ''; sO.innerHTML = ''; sL.textContent = ''; }
     // standings + power + odds
     const s = dash.data('standings_2026'), pw = dash.data('power_2026'), po = dash.data('playoff_odds'), ts = document.getElementById('t-stand');
@@ -805,9 +805,14 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     const kWk = dash.data('weekly');
     if (kWk.status === 'ok') { const w = kWk.data.filter(r => +r.season === 2026); const mw = d3.max(w, r => +r.week); const lo = d3.least(w.filter(r => +r.week === mw), r => +r.points);
       if (lo) { document.getElementById('kpi-lo-lab').textContent = `Low score · week ${mw} 💩`; setK('kpi-lo', f2(+lo.points), lo.owner); } }
-    if (kTw.status === 'ok' && kTw.data.length) { const c = d3.rollups(kTw.data, v => v.length, r => r.owner).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const prizeTally = () => { const tw = dash.data('top_weekly'), sv = dash.data('survivor'), M = new Map();
+      if (tw.status === 'ok') tw.data.forEach(r => M.set(r.owner, (M.get(r.owner) || 0) + 25));
+      let paid = tw.status === 'ok' ? tw.data.length * 25 : 0;
+      if (sv.status === 'ok') { const al = sv.data.filter(r => r.status !== 'Out'); if (al.length === 1) { M.set(al[0].owner, (M.get(al[0].owner) || 0) + 100); paid += 100; } }
+      return {c: [...M].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])), paid}; };
+    if (kTw.status === 'ok' && kTw.data.length) { const {c, paid} = prizeTally();
       const top = c.filter(x => x[1] === c[0][1]);
-      setK('kpi-pm', `$${c[0][1] * 25}`, `${top.map(x => x[0]).join(' & ')} · $${kTw.data.length * 25} paid out so far`); }
+      setK('kpi-pm', `$${c[0][1]}`, `${top.map(x => x[0]).join(' & ')} · $${paid} paid out so far`); }
     // clinch scenarios
     const cs = dash.data('clinch_scenarios'), cl = document.getElementById('clinch-list');
     if (cs.status === 'ok') {
@@ -830,7 +835,8 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       const c = d3.rollups(tw.data, v => v.length, r => r.owner).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
       const hi = d3.greatest(tw.data, r => r.points);
       twH.textContent = `Season high ${f2(hi.points)}`;
-      twT.innerHTML = c.map(([o, n], i) => `<span class="pill${n === c[0][1] ? ' lead' : ''}">${GB.esc(o)} <b>$${n * 25}</b></span>`).join('');
+      const pt = prizeTally().c;
+      twT.innerHTML = pt.map(([o, n]) => `<span class="pill${n === pt[0][1] ? ' lead' : ''}">${GB.esc(o)} <b>$${n}</b></span>`).join('');
       twR.innerHTML = tw.data.map(r => `<div class="rw" data-row-key="${r.week}"><span class="wk">Wk ${r.week}</span><span class="nm">${GB.esc(r.owner)}${r === hi ? '<span class="tagx">season high</span>' : ''}</span><span class="sc">${f2(r.points)}</span></div>`).join('');
     } else { twT.innerHTML = ''; twR.innerHTML = ''; twH.textContent = ''; }
     // all-time
