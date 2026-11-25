@@ -355,6 +355,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 <script>
 (() => {
   window.GB = {};
+  GB.nick = o => /^Jordan /.test(o) ? o.slice(7) : o.split(' ')[0];
   dash.calc('standings_2026', {
     title: '2026 standings', description: 'This season’s rows with all-play % and luck (wins minus all-play expected wins).',
     inputs: ['seasons'],
@@ -430,7 +431,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       streaks.forEach(r => { P[key(r.owner_a, r.owner_b)] = {w: {[r.owner_a]: +r.a_wins, [r.owner_b]: +r.b_wins}, holder: r.streak_owner, n: +r.streak_len, recent: (r.last10 || '').split('').map(c => c === 'a' ? r.owner_a : r.owner_b)}; });
       results.slice().sort((a, b) => a.week - b.week).forEach(g => { const win = +g.home_pts > +g.away_pts ? g.home : g.away; const k = key(g.home, g.away);
         const p = P[k] = P[k] || {w: {}, holder: null, n: 0, recent: []}; p.w[win] = (p.w[win] || 0) + 1; p.recent.push(win); if (p.holder === win) p.n++; else { p.holder = win; p.n = 1; } });
-      const first = o => o.split(' ')[0];
+      const first = o => /^Jordan /.test(o) ? o.slice(7) : o.split(' ')[0];
       return schedule.filter(g => +g.week === wk).map(g => { const p = P[key(g.home, g.away)] || {w: {}, holder: null, n: 0, recent: []};
         const r10 = p.recent.slice(-10), m = r10.length, top = [g.home, g.away].map(o => [o, r10.filter(x => x === o).length]).sort((a, b) => b[1] - a[1])[0];
         const ofLast = `${first(top[0])} has won ${top[1]} of the last ${m}`, run = `${first(p.holder)} has won ${p.n} straight`;
@@ -487,7 +488,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
         const W = {...W0}; G0.forEach((g, i) => { W[(m >> i) & 1 ? g.home : g.away]++; });
         owners.forEach(o => { cl[o][m] = pushedOut(o, W) ? 0 : 1; });
       }
-      const first = o => o.split(' ')[0];
+      const first = o => /^Jordan /.test(o) ? o.slice(7) : o.split(' ')[0];
       const out = [];
       owners.forEach(o => {
         const c = cl[o];
@@ -764,7 +765,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       sO.innerHTML = out.map(r => `<div class="rw out" data-row-key="${GB.esc(r.owner)}"><span class="wk">Wk ${r.week_out}</span><span class="nm">${GB.esc(r.owner)}</span><span class="sc">${f2(r.score_out)}</span></div>`).join('');
       const kb = document.getElementById('kpi-surv'), ks = document.getElementById('kpi-surv-sub');
       kb.classList.remove('dash-skeleton'); kb.textContent = alive.length === 1 ? alive[0].owner : `${alive.length} left`;
-      ks.textContent = alive.length === 1 ? 'Survivor champion · $100' : alive.map(r => r.owner.split(' ')[0]).join(', ');
+      ks.textContent = alive.length === 1 ? 'Survivor champion · $100' : alive.map(r => GB.nick(r.owner)).join(', ');
     } else { sA.innerHTML = ''; sO.innerHTML = ''; sL.textContent = ''; }
     // standings + power + odds
     const s = dash.data('standings_2026'), pw = dash.data('power_2026'), po = dash.data('playoff_odds'), ts = document.getElementById('t-stand');
@@ -791,7 +792,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     const wcd = dash.data('wildcard_spot'), twc = document.getElementById('t-wc'), wcs = document.getElementById('wc-sum');
     if (wcd.status === 'ok' && wcd.data.length) {
       const h = wcd.data[0];
-      if (wcs) wcs.textContent = `${h.owner.split(' ')[0]} holds it with ${h.weeks_left} week${h.weeks_left === 1 ? '' : 's'} to go.`;
+      if (wcs) wcs.textContent = `${GB.nick(h.owner)} holds it with ${h.weeks_left} week${h.weeks_left === 1 ? '' : 's'} to go.`;
       GB.table(twc, wcd.data, [
         {key: 'owner', label: 'Team', html: (v, r) => `${r.holder ? `<span class="wc-tag" style="background:${dash.colors[1]}">WC</span>` : ''}${GB.esc(v)}<span class="tm">${GB.esc(r.record)}</span>`},
         {key: 'points_for', label: 'PF', num: true, fmt: f2},
@@ -802,15 +803,15 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     // headline tiles
     const setK = (id, big, sub) => { const b = document.getElementById(id), sb = document.getElementById(id + '-sub'); if (b) { b.textContent = big; b.classList.remove('dash-skeleton'); } if (sb) sb.textContent = sub; };
     const kTw = dash.data('top_weekly'), kSt = dash.data('standings_2026'), kPw = dash.data('power_2026');
-    if (kTw.status === 'ok' && kTw.data.length) { const t = kTw.data[0]; document.getElementById('kpi-hs-lab').textContent = `High score · week ${t.week}`; setK('kpi-hs', f2(t.points), `${t.owner} · beat ${t.runner_up.split(' ')[0]} by ${f2(t.margin)}`); }
+    if (kTw.status === 'ok' && kTw.data.length) { const t = kTw.data[0]; document.getElementById('kpi-hs-lab').textContent = `High score · week ${t.week}`; setK('kpi-hs', f2(t.points), `${t.owner} · beat ${GB.nick(t.runner_up)} by ${f2(t.margin)}`); }
     if (kSt.status === 'ok' && kSt.data.length) { const r = kSt.data.slice().sort((a, b) => a.seed - b.seed); const lead = r[0], next = r[1], wl = x => x.record.split('-').map(Number); const [lw, ll] = wl(lead), [nw, nl] = wl(next); const gb = (lw - nw + nl - ll) / 2;
       setK('kpi-rec', lead.record, `${lead.owner}${gb > 0 ? ` · ${gb} game${gb === 1 ? '' : 's'} ahead` : ' · tied atop'}`); }
     const kMv = dash.data('power_movers');
     if (kPw.status === 'ok' && kPw.data.length) { const p = kPw.data.slice().sort((a, b) => a.power_rank - b.power_rank); setK('kpi-pw', p[0].owner, '');
       const sb = document.getElementById('kpi-pw-sub');
       if (kMv.status === 'ok' && kMv.data.length) { const up = kMv.data.slice().sort((a, b) => b.change - a.change)[0], dn = kMv.data.slice().sort((a, b) => a.change - b.change)[0];
-        sb.innerHTML = (up.change > 0 ? `<span class="up">▲${up.change}</span> ${GB.esc(up.owner.split(' ')[0])}` : 'No risers') + ' · ' + (dn.change < 0 ? `<span class="dn">▼${-dn.change}</span> ${GB.esc(dn.owner.split(' ')[0])}` : 'no fallers'); }
-      else sb.textContent = `Then ${p[1].owner.split(' ')[0]}, ${p[2].owner.split(' ')[0]}`; }
+        sb.innerHTML = (up.change > 0 ? `<span class="up">▲${up.change}</span> ${GB.esc(GB.nick(up.owner))}` : 'No risers') + ' · ' + (dn.change < 0 ? `<span class="dn">▼${-dn.change}</span> ${GB.esc(GB.nick(dn.owner))}` : 'no fallers'); }
+      else sb.textContent = `Then ${GB.nick(p[1].owner)}, ${GB.nick(p[2].owner)}`; }
     const kWk = dash.data('weekly');
     if (kWk.status === 'ok') { const w = kWk.data.filter(r => +r.season === 2026); const mw = d3.max(w, r => +r.week); const lo = d3.least(w.filter(r => +r.week === mw), r => +r.points);
       if (lo) { document.getElementById('kpi-lo-lab').textContent = `Low score · week ${mw} 💩`; setK('kpi-lo', f2(+lo.points), lo.owner); } }
@@ -834,7 +835,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     if (mu.status === 'ok' && mu.data.length) {
       document.getElementById('mu-title').textContent = `Week ${mu.data[0].week} matchups`;
       const side = (o, r) => `<div class="side"><span class="nm">${GB.esc(o)}</span><span class="rc">${GB.esc(r)}</span></div>`;
-      mg.innerHTML = mu.data.map(g => { const a = g.h2h_home_wins, b = g.h2h_away_wins, fa = g.home.split(' ')[0], fb = g.away.split(' ')[0];
+      mg.innerHTML = mu.data.map(g => { const a = g.h2h_home_wins, b = g.h2h_away_wins, fa = GB.nick(g.home), fb = GB.nick(g.away);
         const series = a + b === 0 ? 'First ever meeting' : a === b ? `Series tied ${a}-${b}` : `${a > b ? fa : fb} leads series ${Math.max(a, b)}-${Math.min(a, b)}`;
         return `<div class="mu" data-row-key="${GB.esc(g.game)}">${side(g.home, g.home_record)}${side(g.away, g.away_record)}<div class="vs">${series}${g.note ? `<br><span class="hot">🔥 ${GB.esc(g.note)}</span>` : ''}</div></div>`; }).join('');
     } else mg.innerHTML = '';
@@ -928,7 +929,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
   (() => { const pane = document.getElementById('now'); if (!pane) return; let full = [];
     const shorten = () => { if (!full.length) { const s = dash.data('seasons'); if (s.status !== 'ok') return; full = [...new Set(s.data.filter(r => +r.season === 2026).map(r => r.owner))].filter(o => o.includes(' ')).sort((a, b) => b.length - a.length); }
       const w = document.createTreeWalker(pane, NodeFilter.SHOW_TEXT); let n;
-      while ((n = w.nextNode())) { let t = n.nodeValue, c = false; for (const o of full) if (t.includes(o)) { t = t.split(o).join(o.split(' ')[0]); c = true; } if (c) n.nodeValue = t; } };
+      while ((n = w.nextNode())) { let t = n.nodeValue, c = false; for (const o of full) if (t.includes(o)) { t = t.split(o).join(GB.nick(o)); c = true; } if (c) n.nodeValue = t; } };
     dash.onData(() => setTimeout(shorten, 0));
     new MutationObserver(() => shorten()).observe(pane, {subtree: true, childList: true, characterData: true}); })();
   document.getElementById('sel-h2h').addEventListener('change', () => GB.drawH2H());
@@ -977,7 +978,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     box.innerHTML = ''; const W = box.clientWidth || 600, H = 320;
     const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
     const pick = sel.value;
-    const rpad = measure(svg, [`${pick.split(' ')[0]} 000.0`]) + 10;
+    const rpad = measure(svg, [`${GB.nick(pick)} 000.0`]) + 10;
     const x = d3.scaleLinear(d3.extent(rows, r => r.week), [M.l, W - M.r - rpad]);
     const y = d3.scaleLinear([40, d3.max(rows, r => r.points) + 10], [H - M.b, M.t]).nice();
     svg.append('g').attr('transform', `translate(0,${H - M.b})`).call(d3.axisBottom(x).ticks(d3.max(rows, r => r.week)).tickFormat(v => `Wk ${v}`)).call(GB.axis);
@@ -991,7 +992,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     const pv = by.get(pick) || [];
     svg.append('g').selectAll('circle').data(pv).join('circle').attr('cx', r => x(r.week)).attr('cy', r => y(r.points)).attr('r', 3.5).attr('fill', dash.colors[0]);
     const last = pv[pv.length - 1];
-    if (last) svg.append('text').attr('x', x(last.week) + 8).attr('y', y(last.points) + 4).attr('fill', 'var(--color-fg)').style('font-size', 'var(--cds-font-size-caption)').text(`${pick.split(' ')[0]} ${GB.f1(last.points)}`);
+    if (last) svg.append('text').attr('x', x(last.week) + 8).attr('y', y(last.points) + 4).attr('fill', 'var(--color-fg)').style('font-size', 'var(--cds-font-size-caption)').text(`${GB.nick(pick)} ${GB.f1(last.points)}`);
     const tip = GB.tip(box), dot = svg.append('circle').attr('r', 4).attr('fill', 'var(--color-fg)').style('display', 'none');
     const pts = rows.map(r => [x(r.week), y(r.points), r]);
     const del = d3.Delaunay.from(pts, p => p[0], p => p[1]);
@@ -1054,7 +1055,7 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
     const la = avg[avg.length - 1], lm = mine[mine.length - 1];
     const ya = y(la.ppg), ym = lm ? y(lm.ppg) : -99; const sep = Math.abs(ya - ym) < 14 ? (ya < ym ? -7 : 7) : 0;
     svg.append('text').attr('x', x(la.season) + 8).attr('y', ya + 4 - sep).call(cap).text(`League avg ${GB.f1(la.ppg)}`);
-    if (lm && lm.season === la.season) svg.append('text').attr('x', x(lm.season) + 8).attr('y', ym + 4 + sep).attr('fill', 'var(--color-fg)').style('font-size', 'var(--cds-font-size-caption)').text(`${pick.split(' ')[0]} ${GB.f1(lm.ppg)}`);
+    if (lm && lm.season === la.season) svg.append('text').attr('x', x(lm.season) + 8).attr('y', ym + 4 + sep).attr('fill', 'var(--color-fg)').style('font-size', 'var(--cds-font-size-caption)').text(`${GB.nick(pick)} ${GB.f1(lm.ppg)}`);
     svg.append('text').attr('x', M.l).attr('y', M.t - 2).call(cap).text('Points per game');
   }
 
