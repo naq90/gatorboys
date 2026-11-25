@@ -197,9 +197,8 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
    </div>
    <div class="card" id="topweek-card">
     <div class="hd"><h2>Top score each week</h2><span class="pill" id="tw-high" data-source="top_weekly"></span></div>
-    <div class="lab2">Winnings</div>
-    <div class="legend" data-source="winnings"><span><i id="lg-wk"></i>Top score of the week · $25</span><span><i id="lg-sv"></i>Survivor · $100</span></div>
-    <div class="chart" id="c-win" data-source="winnings"></div>
+    <div class="lab2">Prize money · $25 a week + $100 survivor</div>
+    <div class="chips" id="tw-tally" data-source="top_weekly"></div>
     <div class="lab2">By week</div>
     <div class="rows" id="tw-rows" data-source="top_weekly"></div>
    </div>
@@ -549,14 +548,6 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
       return owners.map(o => ({owner: o, week: maxW, rank: now[o], prev_rank: prev[o], change: prev[o] - now[o]})).sort((a, b) => a.rank - b.rank);
     }
   });
-  dash.calc('winnings', {
-    title: '2026 winnings', description: '$25 to the top score each completed week, plus $100 to the survivor pool winner once one owner is left.',
-    inputs: ['top_weekly', 'survivor'],
-    fn: (tw, sv) => { const M = {}; const g = o => M[o] = M[o] || {owner: o, weekly: 0, weeks: 0, survivor: 0};
-      tw.forEach(r => { g(r.owner).weekly += 25; M[r.owner].weeks++; });
-      const al = sv.filter(r => r.status !== 'Out'); if (al.length === 1) g(al[0].owner).survivor = 100;
-      return Object.values(M).map(r => ({...r, total: r.weekly + r.survivor})).sort((a, b) => b.total - a.total || a.owner.localeCompare(b.owner)); }
-  });
   dash.calc('alltime', {
     title: 'All-time standings', description: 'Per owner across completed seasons 2016–2025, titles from the championship list (2014–2025).',
     inputs: ['seasons', 'champs'],
@@ -840,11 +831,13 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
         return `<div class="mu" data-row-key="${GB.esc(g.game)}">${side(g.home, g.home_record)}${side(g.away, g.away_record)}<div class="vs">${series}${g.note ? `<br><span class="hot">🔥 ${GB.esc(g.note)}</span>` : ''}</div></div>`; }).join('');
     } else mg.innerHTML = '';
     // top score each week
-    const tw = dash.data('top_weekly'), twT = document.getElementById('tw-tally') || {}, twR = document.getElementById('tw-rows'), twH = document.getElementById('tw-high');
+    const tw = dash.data('top_weekly'), twT = document.getElementById('tw-tally'), twR = document.getElementById('tw-rows'), twH = document.getElementById('tw-high');
     if (tw.status === 'ok' && tw.data.length) {
       const c = d3.rollups(tw.data, v => v.length, r => r.owner).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
       const hi = d3.greatest(tw.data, r => r.points);
       twH.textContent = `Season high ${f2(hi.points)}`;
+      const pt = prizeTally().c;
+      twT.innerHTML = pt.map(([o, n]) => `<span class="pill${n === pt[0][1] ? ' lead' : ''}">${GB.esc(o)} <b>$${n}</b></span>`).join('');
       twR.innerHTML = tw.data.map(r => `<div class="rw" data-row-key="${r.week}"><span class="wk">Wk ${r.week}</span><span class="nm">${GB.esc(r.owner)}${r === hi ? '<span class="tagx">season high</span>' : ''}</span><span class="sc">${f2(r.points)}</span></div>`).join('');
     } else { twT.innerHTML = ''; twR.innerHTML = ''; twH.textContent = ''; }
     // all-time
@@ -1137,14 +1130,12 @@ let t; addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>cbs.forEa
 
   function legendSwatches() {
     const set = (id, c) => { const e = document.getElementById(id); if (e) e.style.background = c; };
-    set('lg-pk', dash.colors[0]); set('lg-tr', dash.colors[1]); set('lg-fa', dash.colors[0]); set('lg-wv', dash.colors[2]); set('lg-wk', dash.colors[0]); set('lg-sv', dash.colors[1]);
+    set('lg-pk', dash.colors[0]); set('lg-tr', dash.colors[1]); set('lg-fa', dash.colors[0]); set('lg-wv', dash.colors[2]);
   }
 
   GB.redraw = () => {
     legendSwatches();
     weekChart(); finishChart(); pfChart(); matrixChart(); distChart(); draftBoard();
-    hbar('c-win', 'winnings', d => d.map(r => ({...r, label: r.owner})),
-      {segs: r => [{v: r.weekly, c: dash.colors[0]}, {v: r.survivor, c: dash.colors[1]}], text: r => `$${r.total}`, tip: r => `${GB.esc(r.owner)} · $${r.total}<br>${r.weeks} top score${r.weeks === 1 ? '' : 's'} · $${r.weekly}${r.survivor ? `<br>Survivor winner · $${r.survivor}` : ''}`});
     hbar('c-luck', 'standings_2026', d => [...d].sort((a, b) => b.luck - a.luck).map(r => ({...r, label: r.owner, value: r.luck})),
       {color: r => r.value >= 0 ? dash.colors[0] : dash.colors[1], ref: 0, text: r => (r.value > 0 ? '+' : '') + GB.f2(r.value), tip: r => `${GB.esc(r.owner)}<br>${r.record} actual · ${r.allplay} all-play<br>Luck ${(r.luck > 0 ? '+' : '') + GB.f2(r.luck)} wins`});
     const lgIn = document.getElementById('lg-in'); if (lgIn) lgIn.style.background = dash.colors[0];
